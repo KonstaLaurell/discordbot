@@ -1,10 +1,12 @@
 const { Client, GatewayIntentBits, EmbedBuilder, Collection } = require('discord.js');
 const cron = require('node-cron');
 const dotenv = require('dotenv');
+
+// Load environment variables BEFORE requiring other modules
+dotenv.config();
+
 const githubTracker = require('./githubTracker');
 const { loadChannelMappings, saveChannelMappings } = require('./database');
-
-dotenv.config();
 
 const client = new Client({
     intents: [
