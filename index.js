@@ -20,6 +20,15 @@ let channelMappings = {};
 client.once('ready', async () => {
     console.log(`✅ Bot is online as ${client.user.tag}`);
     
+    // Check GitHub token status
+    const githubUser = await githubTracker.getAuthenticatedUser();
+    if (githubUser) {
+        console.log(`🔑 GitHub authenticated as: ${githubUser.login}`);
+    } else {
+        console.log('⚠️  No GitHub token configured or authentication failed');
+        console.log('   Check GITHUB_TOKEN in .env file');
+    }
+    
     // Load existing channel mappings
     channelMappings = await loadChannelMappings();
     console.log(`📚 Loaded ${Object.keys(channelMappings).length} channel mappings`);

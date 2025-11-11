@@ -5,6 +5,14 @@ const GITHUB_API_BASE = 'https://api.github.com';
 // Optional: Add your GitHub token for higher rate limits
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || null;
 
+// Debug: Log token status (showing only first/last 4 chars for security)
+if (GITHUB_TOKEN) {
+    const tokenPreview = `${GITHUB_TOKEN.substring(0, 4)}...${GITHUB_TOKEN.substring(GITHUB_TOKEN.length - 4)}`;
+    console.log(`🔑 GitHub token loaded: ${tokenPreview}`);
+} else {
+    console.log('⚠️  No GitHub token found in environment');
+}
+
 const axiosInstance = axios.create({
     baseURL: GITHUB_API_BASE,
     headers: GITHUB_TOKEN ? {
