@@ -89,6 +89,12 @@ Show information about the repository linked to this channel.
 #### `!check`
 Manually check for new commits right now (doesn't wait for the scheduled check).
 
+#### `!token` or `!whoami`
+Check which GitHub account is authenticated and verify your token is working.
+- Shows if a token is configured
+- Displays the authenticated username
+- Shows access level (public only vs public + private repos)
+
 #### `!help`
 Display help information with all available commands.
 

@@ -21,9 +21,19 @@ const axiosInstance = axios.create({
 async function verifyRepository(owner, repo) {
     try {
         const response = await axiosInstance.get(`/repos/${owner}/${repo}`);
+        console.log(`✅ Successfully verified repository: ${owner}/${repo}`);
         return response.status === 200;
     } catch (error) {
-        console.error(`Failed to verify repository ${owner}/${repo}:`, error.message);
+        console.error(`❌ Failed to verify repository ${owner}/${repo}`);
+        console.error(`   Status: ${error.response?.status}`);
+        console.error(`   Message: ${error.message}`);
+        if (error.response?.status === 404) {
+            console.error(`   → Repository not found or you don't have access`);
+            console.error(`   → Make sure your GitHub token has 'repo' scope (not just 'public_repo')`);
+            console.error(`   → Verify you have access to this private repository`);
+        } else if (error.response?.status === 401) {
+            console.error(`   → Authentication failed - check your GITHUB_TOKEN in .env`);
+        }
         return false;
     }
 }
@@ -89,8 +99,27 @@ async function getRepositoryInfo(owner, repo) {
     }
 }
 
+/**
+ * Get authenticated user information
+ * Returns null if no token is set or if authentication fails
+ */
+async function getAuthenticatedUser() {
+    if (!GITHUB_TOKEN) {
+        return null;
+    }
+    
+    try {
+        const response = await axiosInstance.get('/user');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching authenticated user:', error.message);
+        return null;
+    }
+}
+
 module.exports = {
     verifyRepository,
     getRecentCommits,
-    getRepositoryInfo
+    getRepositoryInfo,
+    getAuthenticatedUser
 };

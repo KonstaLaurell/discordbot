@@ -60,6 +60,10 @@ client.on('messageCreate', async (message) => {
             case 'help':
                 await handleHelpCommand(message);
                 break;
+            case 'token':
+            case 'whoami':
+                await handleTokenCommand(message);
+                break;
         }
     } catch (error) {
         console.error('Error handling command:', error);
@@ -162,10 +166,49 @@ async function handleHelpCommand(message) {
             { name: '!unlink', value: 'Unlink the repository from this channel', inline: false },
             { name: '!list', value: 'Show the repository linked to this channel', inline: false },
             { name: '!check', value: 'Manually check for new commits now', inline: false },
+            { name: '!token (or !whoami)', value: 'Check which GitHub account is authenticated', inline: false },
             { name: '!help', value: 'Show this help message', inline: false }
         )
         .setFooter({ text: 'The bot automatically checks for commits every 10 minutes' })
         .setTimestamp();
+    
+    message.reply({ embeds: [embed] });
+}
+
+async function handleTokenCommand(message) {
+    const user = await githubTracker.getAuthenticatedUser();
+    
+    if (!user) {
+        const embed = new EmbedBuilder()
+            .setColor(0xFFA500)
+            .setTitle('⚠️ No GitHub Token')
+            .setDescription('No GitHub token is configured. The bot is using unauthenticated requests.')
+            .addFields(
+                { name: 'Rate Limit', value: '60 requests/hour', inline: true },
+                { name: 'Access', value: 'Public repos only', inline: true }
+            )
+            .setFooter({ text: 'Add GITHUB_TOKEN to .env for private repo access and higher rate limits' });
+        
+        return message.reply({ embeds: [embed] });
+    }
+    
+    const embed = new EmbedBuilder()
+        .setColor(0x00FF00)
+        .setTitle('✅ GitHub Authentication')
+        .setDescription(`Authenticated as **${user.login}**`)
+        .addFields(
+            { name: 'Name', value: user.name || 'Not set', inline: true },
+            { name: 'Account Type', value: user.type, inline: true },
+            { name: 'Public Repos', value: user.public_repos.toString(), inline: true },
+            { name: 'Rate Limit', value: '5,000 requests/hour', inline: true },
+            { name: 'Access', value: 'Public + Private repos', inline: true }
+        )
+        .setThumbnail(user.avatar_url)
+        .setTimestamp();
+    
+    if (user.bio) {
+        embed.setFooter({ text: user.bio });
+    }
     
     message.reply({ embeds: [embed] });
 }
