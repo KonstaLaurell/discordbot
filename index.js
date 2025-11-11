@@ -258,11 +258,14 @@ async function checkRepository(channelId) {
         const commitsToPost = commits.reverse().slice(0, 5); // Limit to 5 commits at a time
         
         for (const commit of commitsToPost) {
+            // Get full commit message, truncate if too long (Discord limit is 4096 chars for description)
+            const fullMessage = commit.commit.message.substring(0, 4000);
+            
             const embed = new EmbedBuilder()
                 .setColor(0x6e5494)
                 .setTitle(`📝 New Commit to ${mapping.owner}/${mapping.repo}`)
                 .setURL(commit.html_url)
-                .setDescription(commit.commit.message.split('\n')[0].substring(0, 200))
+                .setDescription(fullMessage)
                 .addFields(
                     { name: 'Author', value: commit.commit.author.name, inline: true },
                     { name: 'Branch', value: mapping.branch, inline: true },
