@@ -18,6 +18,8 @@ const client = new Client({
 
 // Store channel-to-repo mappings
 let channelMappings = {};
+// Track posted commit SHAs to prevent duplicates (in-memory backup)
+const postedCommits = new Set();
 
 client.once('ready', async () => {
     console.log(`✅ Bot is online as ${client.user.tag}`);
@@ -246,6 +248,9 @@ async function checkRepository(channelId) {
         
         if (commits.length === 0) return;
         
+        // Save the newest commit SHA before we reverse the array
+        const newestCommitSha = commits[0].sha;
+        
         const channel = await client.channels.fetch(channelId);
         if (!channel) {
             console.log(`Channel ${channelId} not found, removing mapping`);
@@ -258,6 +263,12 @@ async function checkRepository(channelId) {
         const commitsToPost = commits.reverse().slice(0, 5); // Limit to 5 commits at a time
         
         for (const commit of commitsToPost) {
+            // Extra safety: Skip if we've already posted this commit
+            if (postedCommits.has(commit.sha)) {
+                console.log(`⏭️  Skipping already posted commit: ${commit.sha.substring(0, 7)}`);
+                continue;
+            }
+            
             // Get full commit message, truncate if too long (Discord limit is 4096 chars for description)
             const fullMessage = commit.commit.message.substring(0, 4000);
             
@@ -279,10 +290,14 @@ async function checkRepository(channelId) {
             }
             
             await channel.send({ embeds: [embed] });
+            
+            // Mark this commit as posted
+            postedCommits.add(commit.sha);
+            console.log(`✅ Posted commit: ${commit.sha.substring(0, 7)} - ${commit.commit.message.split('\n')[0].substring(0, 50)}`);
         }
         
-        // Update last commit SHA and check time
-        channelMappings[channelId].lastCommitSha = commits[0].sha;
+        // Update last commit SHA to the NEWEST one (before we reversed the array)
+        channelMappings[channelId].lastCommitSha = newestCommitSha;
         channelMappings[channelId].lastChecked = new Date().toISOString();
         await saveChannelMappings(channelMappings);
         
